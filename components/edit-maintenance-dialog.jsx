@@ -14,6 +14,7 @@ const MAINTENANCE_TYPES = [
   "Tagliando",
   "Revisione",
   "Cambio Gomme",
+  "Frizione",
   "Freni",
   "Filtri",
   "Altro",
@@ -56,7 +57,7 @@ export default function EditMaintenanceDialog({ open, onClose, maintenance, onSa
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-white">
+      <DialogContent className="bg-white" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Modifica Manutenzione</DialogTitle>
         </DialogHeader>
