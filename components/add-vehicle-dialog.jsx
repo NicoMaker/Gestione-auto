@@ -1,48 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { saveVehicle } from "@/lib/storage"
 
-export default function AddVehicleDialog({ open, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    brand: "",
-    model: "",
-    plate: "",
-    year: "",
-    currentKm: "",
-  })
+const INITIAL_STATE = {
+  brand: "",
+  model: "",
+  plate: "",
+  year: "",
+  currentKm: "",
+}
+
+export default function AddVehicleDialog({ open, onClose, onSave, vehicleToEdit }) {
+  const [formData, setFormData] = useState(INITIAL_STATE)
+
+  const isEditing = !!vehicleToEdit
+
+  useEffect(() => {
+    if (isEditing) {
+      setFormData(vehicleToEdit)
+    } else {
+      setFormData(INITIAL_STATE)
+    }
+  }, [vehicleToEdit, open])
+
+  const handleClose = () => {
+    onClose()
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
     const vehicle = {
       ...formData,
-      year: Number.parseInt(formData.year),
-      currentKm: Number.parseInt(formData.currentKm) || 0,
+      id: isEditing ? vehicleToEdit.id : undefined, // Mantieni l'ID se stiamo modificando
+      year: Number(formData.year),
+      currentKm: Number(formData.currentKm) || 0,
     }
 
     saveVehicle(vehicle)
     onSave()
     onClose()
-
-    setFormData({
-      brand: "",
-      model: "",
-      plate: "",
-      year: "",
-      currentKm: "",
-    })
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="bg-white">
         <DialogHeader>
-          <DialogTitle>Aggiungi Nuovo Veicolo</DialogTitle>
+          <DialogTitle>{isEditing ? "Modifica Veicolo" : "Aggiungi Nuovo Veicolo"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -105,10 +114,10 @@ export default function AddVehicleDialog({ open, onClose, onSave }) {
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1 bg-transparent">
               Annulla
             </Button>
-            <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">              
               Salva Veicolo
             </Button>
           </div>
