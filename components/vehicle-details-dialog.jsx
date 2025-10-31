@@ -1,17 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { Calendar, Gauge, Trash2, CheckCircle2, Circle } from "lucide-react"
+import { Calendar, Gauge, Trash2, CheckCircle2, Circle, Pencil } from "lucide-react"
 import { saveVehicle, deleteMaintenance, saveMaintenance } from "@/lib/storage"
 import { checkMaintenanceDue } from "@/lib/notifications"
+import AddVehicleDialog from "./add-vehicle-dialog"
+import EditMaintenanceDialog from "./edit-maintenance-dialog"
 
 export default function VehicleDetailsDialog({ open, onClose, vehicle, maintenances, onRefresh }) {
   const [currentKm, setCurrentKm] = useState(vehicle.currentKm || 0)
+  const [showEditVehicle, setShowEditVehicle] = useState(false)
+  const [editingMaintenance, setEditingMaintenance] = useState(null)
 
   const handleUpdateKm = () => {
     const updatedVehicle = {
@@ -45,7 +49,7 @@ export default function VehicleDetailsDialog({ open, onClose, vehicle, maintenan
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-white max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="bg-white max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {vehicle.brand} {vehicle.model}
@@ -55,7 +59,7 @@ export default function VehicleDetailsDialog({ open, onClose, vehicle, maintenan
           </p>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1 overflow-y-auto pr-2">
           {/* Update KM */}
           <Card className="p-4 bg-slate-50 border-slate-200">
             <Label htmlFor="updateKm" className="mb-2 block">
@@ -158,14 +162,24 @@ export default function VehicleDetailsDialog({ open, onClose, vehicle, maintenan
                           </div>
                         </div>
 
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteMaintenance(maintenance.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingMaintenance(maintenance)}
+                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteMaintenance(maintenance.id)}
+                            className="text-slate-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   )
@@ -175,12 +189,37 @@ export default function VehicleDetailsDialog({ open, onClose, vehicle, maintenan
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button onClick={onClose} variant="outline">
-            Chiudi
+        <DialogFooter className="pt-4 mt-auto border-t">
+          <Button onClick={() => setShowEditVehicle(true)} variant="outline">
+            Modifica Veicolo
           </Button>
-        </div>
+          <Button onClick={onClose} variant="outline">Chiudi</Button>
+        </DialogFooter>
       </DialogContent>
+
+      {/* Dialog per Modifica Veicolo */}
+      <AddVehicleDialog
+        open={showEditVehicle}
+        onClose={() => setShowEditVehicle(false)}
+        onSave={() => {
+          onRefresh()
+          setShowEditVehicle(false)
+        }}
+        vehicleToEdit={vehicle}
+      />
+
+      {/* Dialog per Modifica Manutenzione */}
+      {editingMaintenance && (
+        <EditMaintenanceDialog
+          open={true}
+          onClose={() => setEditingMaintenance(null)}
+          maintenance={editingMaintenance}
+          onSave={() => {
+            onRefresh()
+            setEditingMaintenance(null)
+          }}
+        />
+      )}
     </Dialog>
   )
 }
