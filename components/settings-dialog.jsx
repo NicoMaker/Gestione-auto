@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "react-hot-toast"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,11 @@ export default function SettingsDialog({ open, onClose, settings, onSave }) {
     e.preventDefault()
 
     if (formData.notificationsEnabled) {
-      await requestNotificationPermission()
+      try {
+        await requestNotificationPermission()
+      } catch (error) {
+        toast.error("Impossibile abilitare le notifiche browser.")
+      }
     }
 
     saveSettings(formData)
