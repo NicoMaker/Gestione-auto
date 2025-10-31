@@ -2,11 +2,10 @@
 
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
-import { Toaster, toast } from "react-hot-toast"
+import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, Mail, MessageSquare } from "lucide-react"
-import { saveMaintenance, getSettings } from "@/lib/storage"
-import { sendEmailNotification, sendSmsNotification } from "@/lib/notifications"
+import { AlertTriangle } from "lucide-react"
+import { saveMaintenance } from "@/lib/storage"
 
 export default function MaintenanceAlerts({ alerts, onRefresh }) {
   const [loadingStates, setLoadingStates] = useState({})
@@ -21,58 +20,8 @@ export default function MaintenanceAlerts({ alerts, onRefresh }) {
       completedAt: new Date().toISOString(),
     }
     saveMaintenance(updatedMaintenance)
-
-    // Invia notifiche di completamento
-    const settings = getSettings()
-    if (settings.email) {
-      await sendEmailNotification(settings.email, alert.maintenance, alert.vehicle, "completion")
-    }
-    if (settings.phone) {
-      await sendSmsNotification(settings.phone, alert.maintenance, alert.vehicle, "completion")
-    }
-
-    toast.success("Manutenzione completata e notifiche inviate!")
+    toast.success("Manutenzione completata!")
     onRefresh()
-    setLoadingStates((prev) => ({ ...prev, [alertId]: false }))
-  }
-
-  const handleSendEmail = async (alert) => {
-    const alertId = `email-${alert.maintenance.id}`
-    setLoadingStates((prev) => ({ ...prev, [alertId]: true }))
-
-    const settings = getSettings()
-    if (!settings.email) {
-      toast.error("Configura la tua email nelle impostazioni")
-      setLoadingStates((prev) => ({ ...prev, [alertId]: false }))
-      return
-    }
-
-    const success = await sendEmailNotification(settings.email, alert.maintenance, alert.vehicle, "due_date")
-    if (success) {
-      toast.success("Email inviata con successo")
-    } else {
-      toast.error("Errore invio email. Verifica le impostazioni.")
-    }
-    setLoadingStates((prev) => ({ ...prev, [alertId]: false }))
-  }
-
-  const handleSendSms = async (alert) => {
-    const alertId = `sms-${alert.maintenance.id}`
-    setLoadingStates((prev) => ({ ...prev, [alertId]: true }))
-
-    const settings = getSettings()
-    if (!settings.phone) {
-      setLoadingStates((prev) => ({ ...prev, [alertId]: false }))
-      toast.error("Configura il tuo numero nelle impostazioni")
-      return
-    }
-
-    const success = await sendSmsNotification(settings.phone, alert.maintenance, alert.vehicle, "due_date")
-    if (success) {
-      toast.success("SMS inviato con successo")
-    } else {
-      toast.error("Errore invio SMS. Verifica le impostazioni.")
-    }
     setLoadingStates((prev) => ({ ...prev, [alertId]: false }))
   }
 
@@ -92,7 +41,6 @@ export default function MaintenanceAlerts({ alerts, onRefresh }) {
 
   return (
     <div className="mb-8">
-      <Toaster position="top-center" />
       <div className="flex items-center gap-2 mb-4">
         <AlertTriangle className="w-5 h-5 text-red-600" />
         <h2 className="text-xl font-bold text-slate-900">Scadenze in Arrivo</h2>
@@ -117,24 +65,6 @@ export default function MaintenanceAlerts({ alerts, onRefresh }) {
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleSendEmail(alert)}
-                  title="Invia Email"
-                  disabled={loadingStates[`email-${alert.maintenance.id}`]}
-                >
-                  <Mail className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleSendSms(alert)}
-                  title="Invia SMS"
-                  disabled={loadingStates[`sms-${alert.maintenance.id}`]}
-                >
-                  <MessageSquare className="w-4 h-4" />
-                </Button>
                 <Button
                   size="sm"
                   onClick={() => handleMarkComplete(alert)}

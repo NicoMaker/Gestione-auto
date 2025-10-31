@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Plus, Car, Bell, Settings, AlertTriangle } from "lucide-react"
-import { getVehicles, getMaintenances, getSettings } from "@/lib/storage"
+import { Button } from "@/components/ui/button" 
+import { Plus, Car, Bell, AlertTriangle } from "lucide-react"
+import { getVehicles, getMaintenances } from "@/lib/storage"
 import { checkAllMaintenances, requestNotificationPermission, showBrowserNotification } from "@/lib/notifications"
 import VehicleList from "@/components/vehicle-list"
 import AddVehicleDialog from "@/components/add-vehicle-dialog"
@@ -15,9 +15,8 @@ export default function HomePage() {
   const [vehicles, setVehicles] = useState([])
   const [maintenances, setMaintenances] = useState([])
   const [alerts, setAlerts] = useState([])
-  const [settings, setSettings] = useState({ email: "", phone: "", notificationsEnabled: true })
+  const [notifiedAlerts, setNotifiedAlerts] = useState(new Set())
   const [showAddVehicle, setShowAddVehicle] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -37,31 +36,35 @@ export default function HomePage() {
   const loadData = () => {
     const vehiclesData = getVehicles()
     const maintenancesData = getMaintenances()
-    const settingsData = getSettings()
 
     setVehicles(vehiclesData)
     setMaintenances(maintenancesData)
-    setSettings(settingsData)
 
     const alertsData = checkAllMaintenances(vehiclesData, maintenancesData)
     setAlerts(alertsData)
   }
 
   const checkMaintenancesAndNotify = () => {
-    const vehiclesData = getVehicles()
-    const maintenancesData = getMaintenances()
-    const settingsData = getSettings()
+    const vehiclesData = getVehicles() 
+    const maintenancesData = getMaintenances() 
 
     const alertsData = checkAllMaintenances(vehiclesData, maintenancesData)
     setAlerts(alertsData)
-
-    if (settingsData.notificationsEnabled && alertsData.length > 0) {
+    if (alertsData.length > 0) {
+      const newNotifiedAlerts = new Set(notifiedAlerts)
       alertsData.forEach((alert) => {
-        showBrowserNotification(
-          `Manutenzione in scadenza: ${alert.vehicle.brand} ${alert.vehicle.model}`,
-          `${alert.maintenance.type} - ${alert.reason}`,
-        )
+        const alertId = `${alert.vehicle.id}-${alert.maintenance.id}`
+        // Invia la notifica solo se non è già stata inviata per questa scadenza
+        if (!notifiedAlerts.has(alertId)) {
+          showBrowserNotification(
+            `Manutenzione in scadenza: ${alert.vehicle.brand} ${alert.vehicle.model}`,
+            `${alert.maintenance.type} - ${alert.reason}`,
+          )
+          newNotifiedAlerts.add(alertId)
+        }
       })
+      // Aggiorna lo stato delle notifiche inviate
+      setNotifiedAlerts(newNotifiedAlerts)
     }
   }
 
@@ -86,9 +89,6 @@ export default function HomePage() {
                 <p className="text-sm text-slate-600">Sistema di manutenzione veicoli</p>
               </div>
             </div>
-            <Button onClick={() => setShowSettings(true)} variant="outline" size="icon">
-              <Settings className="w-5 h-5" />
-            </Button>
           </div>
         </div>
       </header>
@@ -163,12 +163,6 @@ export default function HomePage() {
       {/* Dialogs */}
       <AddVehicleDialog open={showAddVehicle} onClose={() => setShowAddVehicle(false)} onSave={loadData} />
 
-      <SettingsDialog
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
-        settings={settings}
-        onSave={loadData}
-      />
     </div>
   )
 }
