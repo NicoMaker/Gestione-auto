@@ -5,7 +5,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { saveMaintenance } from "@/lib/storage"
+
+const MAINTENANCE_TYPES = [
+  "Collaudo",
+  "Cambio Olio",
+  "Tagliando",
+  "Revisione",
+  "Cambio Gomme",
+  "Freni",
+  "Filtri",
+  "Altro",
+]
 
 export default function EditMaintenanceDialog({ open, onClose, maintenance, onSave }) {
   const [formData, setFormData] = useState({
@@ -51,7 +63,18 @@ export default function EditMaintenanceDialog({ open, onClose, maintenance, onSa
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="type">Tipo di Manutenzione</Label>
-            <Input id="type" value={formData.type || ""} onChange={handleChange} required />
+            <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleziona tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {MAINTENANCE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="dueDate">Data Scadenza</Label>
